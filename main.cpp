@@ -14,12 +14,6 @@ struct client{
     std::string client_name;
 };
 
-struct table_info{
-    std::string table_taken_by_client;
-    bool table_status;
-    std::queue<std::string> clients_waiting_for_tables;
-};
-
 bool only_digits_check(const std::string& line){
     return line.find_first_not_of("0123456789") == std::string::npos;
 }
@@ -90,6 +84,7 @@ bool client_entry_valid_check(const std::string& time, const int& start_of_work,
     return minutes >= start_of_work && minutes <= end_of_work;
 }
 
+
 int main(int argc, char* argv[]){
     if (argc != 2){
         std::cerr << "Use " << argv[0] << " source destination" << "\n";
@@ -110,7 +105,7 @@ int main(int argc, char* argv[]){
         int total_number_of_tables = 0;
         int previous_time = -1;
 
-        std::map <int, table_info> table_availability;
+        std::map <int, bool> table_availability;
         std::vector<client> active_clients_data;
         while (getline(input_file, str)){
             std::vector<std::string> data = split_line_by_spaces(str);
@@ -147,8 +142,7 @@ int main(int argc, char* argv[]){
                             case 2:
                                 if (data.size() == 4 && table_number_range_check(data[3], total_number_of_tables)){
                                     new_client = {std::stoi(data[3]), number_of_command,data[0], data[2]};
-                                    table_info new_info{"None", true};
-                                    table_availability[std::stoi(data[3])] = new_info;
+                                    table_availability[std::stoi(data[3])] = true;
                                     break;
                                 }else{throw std::string{"Format error in line: "}.append(str);}
                             case 3: new_client = {-1, number_of_command, data[0], data[2]}; break;
@@ -159,12 +153,13 @@ int main(int argc, char* argv[]){
                     }else{ throw std::string{"Format error in line: "}.append(str); }   
             }
         }
-        for(const auto pair: table_availability) {
-            std::cout << "Table " << pair.first << ": " 
-                    << (pair.second.table_status ? "Available" : "Not Available") 
-                    << " " <<  pair.second.table_taken_by_client <<std::endl;
-        }
-
+        // for(const auto pair: table_availability) {
+        //     std::cout << "Table " << pair.first << ": " 
+        //             << (pair.second.table_status ? "Available" : "Not Available") 
+        //             << " " <<  pair.second.table_taken_by_client <<std::endl;
+        // }
+        std::cout << start_of_work << "\n";
+        std::queue<std::string> clients_waiting_for_tables;
         std::map<std::string, int> client_to_table;
         std::set<std::string> clients_in_club;
         for (const auto& client: active_clients_data) {
@@ -180,35 +175,65 @@ int main(int argc, char* argv[]){
                         break;  
                     }
                     clients_in_club.insert(client.client_name);
+                    clients_waiting_for_tables.push(client.client_name);
                     break;
-                case 2: 
+                case 2:
                     std::cout << client.time << " " << client.command << " " << client.client_name << "\n";
                     if (!clients_in_club.count(client.client_name)){
                         std::cout << client.time << " 13 ClientUnknown" << "\n";
-                        break;  
+                        break;
                     }
-                    if (table_availability[client.table_num].table_status){
-                        table_availability[client.table_num].table_taken_by_client = client.client_name;
-                        table_availability[client.table_num].table_status = false;
-
+                    if (table_availability[client.table_num]){
+                        table_availability[client.table_num] = false;
+                        if (client_to_table.find(client.client_name) != client_to_table.end()){
+                            table_availability[client_to_table[client.client_name]] = true;
+                        }
                         client_to_table[client.client_name] = client.table_num;
                     }else{
                         std::cout << client.time << " 13 PlaceIsBusy" << "\n";
                         break;
                     }
-
                     break;
-                case 3: break;
+                case 3:
+                    // bool isTableAvailable = false;
+                    // for (const auto& pair : table_availability) {
+                    //     if (pair.second.table_status == true) {
+                    //         isTableAvailable = true;
+                    //         break;
+                    //     }
+                    // }
+                    // if (isTableAvailable) {
+                    //     // Есть свободные столики
+                    // } else {
+                    //     // Свободных столиков нет
+                    // }
+                    break;
                 case 4:
                     std::cout << client.time << " " << client.command << " " << client.client_name << "\n";
                     if (!clients_in_club.count(client.client_name)){
                         std::cout << client.time << " 13 ClientUnknown" << "\n";
                         break;  
                     }
+
+                    if (client_to_table.find(client.client_name) != client_to_table.end()){
+                        table_availability[client_to_table[client.client_name]] = true;
+                    }
+
+                    if (!clients_waiting_for_tables.empty()){
+                        std::string first_client_in_queue = clients_waiting_for_tables.front();
+
+                        if (clients_in_club.count(first_client_in_queue)){
+                            client_to_table[first_client_in_queue] = client_to_table[client.client_name];
+                            table_availability[client_to_table[client.client_name]] = false;
+                        }
+
+                        clients_waiting_for_tables.pop();
+                    }
                     clients_in_club.erase(client.client_name);
                     break;
             }
         }
+        std::cout << end_of_work << "\n";
     }catch (const std::string& error_message){
         std::cerr << error_message << "\n";
     }
