@@ -4,11 +4,18 @@
 #include <vector>
 #include <sstream>
 
+struct client{
+    int time;
+    int table_num;
+    std::string client_name;
+
+};
+
 bool only_digits_check(const std::string& line){
     return line.find_first_not_of("0123456789") == std::string::npos;
 }
 
-bool commands_check(const std::string& line){
+bool command_check(const std::string& line){
     if (!only_digits_check(line)){
         return false;
     }
@@ -52,6 +59,12 @@ bool table_number_range_check(const std::string& table_number, const double& tot
     return table_number_value >= 1 && table_number_value <= total_number_of_tables;
 }
 
+int time_to_minutes(const std::string& time){
+    int hours = std::stoi(time.substr(0, 2));
+    int minutes = std::stoi(time.substr(3, 2));
+    return hours * 60 + minutes;
+}
+
 std::vector<std::string> split_line_by_spaces(const std::string& line){
     std::istringstream stream_line(line);
     std::vector<std::string> data;
@@ -78,6 +91,7 @@ int main(int argc, char* argv[]){
         std::string str;
         int count = 1;
         int total_number_of_tables = 0;
+        int previous_time = -1;
         while (getline(input_file, str)){
             std::vector<std::string> data = split_line_by_spaces(str);
             switch (count){
@@ -98,7 +112,12 @@ int main(int argc, char* argv[]){
                         break;
                     }else{ throw std::string{"Format error in line: "}.append(str); }
                 case 4:
-                    if (data.size() > 2 && data.size() < 5 && time_valid_check(data[0]) && commands_check(data[1]) && client_name_valid_check(data[2])){
+                    if (data.size() > 2 && data.size() < 5 && time_valid_check(data[0]) && command_check(data[1]) && client_name_valid_check(data[2])){
+                        int current_time = time_to_minutes(data[0]);
+                        if (current_time < previous_time){
+                            throw std::string{"Format error in line: "}.append(str);
+                        }
+                        previous_time = current_time;
                         int number_of_command = std::stoi(data[1]);
                         switch (number_of_command){
                             case 1: break;
