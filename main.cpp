@@ -16,7 +16,12 @@ struct client{
 
 struct table_info{
     int table;
-    std::string timer;
+    int timer;
+};
+
+struct result_after_work{
+    int all_time_for_table = 0;
+    int money = 0;
 };
 
 bool only_digits_check(const std::string& line){
@@ -89,16 +94,20 @@ bool client_entry_valid_check(const std::string& time, const int& start_of_work,
     return minutes >= start_of_work && minutes <= end_of_work;
 }
 
-std::string convert_minutes_to_hours_minutes(int minutes) {
-    int hours = minutes / 60;
-    int mins = minutes % 60;
+std::string convert_minutes_to_hours_minutes(const int& all_minutes) {
+    int hours = all_minutes / 60;
+    int minutes = all_minutes % 60;
 
-    std::string hourString = (hours < 10) ? "0" + std::to_string(hours) : std::to_string(hours);
-    std::string minString = (mins < 10) ? "0" + std::to_string(mins) : std::to_string(mins);
+    std::string hours_string = (hours < 10) ? "0" + std::to_string(hours) : std::to_string(hours);
+    std::string minutes_string = (minutes < 10) ? "0" + std::to_string(minutes) : std::to_string(minutes);
 
-    std::string timeString = hourString + ":" + minString;
+    std::string timeString = hours_string + ":" + minutes_string;
 
     return timeString;
+}
+
+int earnings_per_table(const int& minutes, const int& price){
+    return ((minutes + 59) / 60) * price;
 }
 
 
@@ -121,6 +130,7 @@ int main(int argc, char* argv[]){
         int count = 1;
         int total_number_of_tables = 0;
         int previous_time = -1;
+        int table_price = 0;
 
         std::map <int, bool> table_availability;
         std::vector<client> active_clients_data;
@@ -142,6 +152,7 @@ int main(int argc, char* argv[]){
                     }else{ throw std::string{"Format error in line: "}.append(str); }
                 case 3:
                     if (data.size() == 1 && only_digits_check(data[0]) ){
+                        table_price = std::stoi(data[0]);
                         ++count;
                         break;
                     }else{ throw std::string{"Format error in line: "}.append(str); }
@@ -179,6 +190,7 @@ int main(int argc, char* argv[]){
         std::queue<std::string> clients_waiting_for_tables;
         std::map<std::string, table_info> client_to_table;
         std::set<std::string> clients_in_club;
+        std::map<int, result_after_work> time_spent_at_each_table;
         int queue_size = 0;
         for (const auto& client: active_clients_data) {
             switch (client.command){
@@ -206,10 +218,17 @@ int main(int argc, char* argv[]){
                         table_availability[client.table_num] = false;
                         if (client_to_table.find(client.client_name) != client_to_table.end()){
                             table_availability[client_to_table[client.client_name].table] = true;
+                            int tmp_timer = time_to_minutes(client.time) - client_to_table[client.client_name].timer;
+                            time_spent_at_each_table[client.table_num].money += earnings_per_table(tmp_timer, table_price);
+                            time_spent_at_each_table[client.table_num].all_time_for_table += tmp_timer;
+                            std::cout << client.table_num << " " << time_to_minutes(client.time) - client_to_table[client.client_name].timer << "!!!!!!!!!!!!!!!!" <<std::endl;
                         }
                         client_to_table[client.client_name].table = client.table_num;
-                        clients_waiting_for_tables.pop();
-                        --queue_size;
+                        client_to_table[client.client_name].timer = time_to_minutes(client.time);
+                        if (clients_waiting_for_tables.front() == client.client_name){
+                            clients_waiting_for_tables.pop();
+                            --queue_size;
+                        } //else{...} <-- you can add some special error here, if necessary
                     }else{
                         std::cout << client.time << " 13 PlaceIsBusy" << "\n";
                         break;
@@ -242,19 +261,27 @@ int main(int argc, char* argv[]){
                     }
 
                     if (client_to_table.find(client.client_name) != client_to_table.end()){
+
                         table_availability[client_to_table[client.client_name].table] = true;
+
+                        int tmp_timer = time_to_minutes(client.time) - client_to_table[client.client_name].timer;
+                        // std::cout << 
+                        time_spent_at_each_table[client_to_table[client.client_name].table].money += earnings_per_table(tmp_timer, table_price);
+                        time_spent_at_each_table[client_to_table[client.client_name].table].all_time_for_table += tmp_timer;
+                        // std::cout << client_to_table[client.client_name].table << " " << time_to_minutes(client.time) - client_to_table[client.client_name].timer << "!!!!!!!!!!!!!!!!" <<std::endl;
+                        
+                        
                         while (!clients_waiting_for_tables.empty()){
                             std::string first_client_in_queue = clients_waiting_for_tables.front();
-
                             if (clients_in_club.count(first_client_in_queue)){
                                 client_to_table[first_client_in_queue] = client_to_table[client.client_name];
                                 table_availability[client_to_table[client.client_name].table] = false;
                                 std::cout << client.time << " 12 " << first_client_in_queue << " " << client_to_table[client.client_name].table << "\n";
+                                client_to_table[first_client_in_queue].timer = time_to_minutes(client.time);
                                 clients_waiting_for_tables.pop();
                                 --queue_size;
                                 break;
                             }
-
                             clients_waiting_for_tables.pop();
                         }
                     }else{
@@ -268,8 +295,13 @@ int main(int argc, char* argv[]){
         for(const auto& client: clients_in_club) {
             std::cout << ending_of_day_work << " 11 " << client << "\n";
         }
-
         std::cout << ending_of_day_work << "\n";
+
+
+        for (const auto& elem : time_spent_at_each_table) {
+            std::cout << elem.first << " " << elem.second.money
+                    << " " << convert_minutes_to_hours_minutes(elem.second.all_time_for_table) << std::endl;
+        }
     }catch (const std::string& error_message){
         std::cerr << error_message << "\n";
     }
