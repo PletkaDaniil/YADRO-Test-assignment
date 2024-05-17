@@ -265,7 +265,7 @@ int main(int argc, char* argv[]){
                         table_availability[client_to_table[client.client_name].table] = true;
 
                         int tmp_timer = time_to_minutes(client.time) - client_to_table[client.client_name].timer;
-                        // std::cout << 
+
                         time_spent_at_each_table[client_to_table[client.client_name].table].money += earnings_per_table(tmp_timer, table_price);
                         time_spent_at_each_table[client_to_table[client.client_name].table].all_time_for_table += tmp_timer;
                         // std::cout << client_to_table[client.client_name].table << " " << time_to_minutes(client.time) - client_to_table[client.client_name].timer << "!!!!!!!!!!!!!!!!" <<std::endl;
@@ -277,6 +277,7 @@ int main(int argc, char* argv[]){
                                 client_to_table[first_client_in_queue] = client_to_table[client.client_name];
                                 table_availability[client_to_table[client.client_name].table] = false;
                                 std::cout << client.time << " 12 " << first_client_in_queue << " " << client_to_table[client.client_name].table << "\n";
+                                
                                 client_to_table[first_client_in_queue].timer = time_to_minutes(client.time);
                                 clients_waiting_for_tables.pop();
                                 --queue_size;
@@ -294,6 +295,10 @@ int main(int argc, char* argv[]){
         std::string ending_of_day_work = convert_minutes_to_hours_minutes(end_of_work);
         for(const auto& client: clients_in_club) {
             std::cout << ending_of_day_work << " 11 " << client << "\n";
+            int tmp_timer = end_of_work - client_to_table[client].timer;
+                        
+            time_spent_at_each_table[client_to_table[client].table].money += earnings_per_table(tmp_timer, table_price);
+            time_spent_at_each_table[client_to_table[client].table].all_time_for_table += tmp_timer;
         }
         std::cout << ending_of_day_work << "\n";
 
