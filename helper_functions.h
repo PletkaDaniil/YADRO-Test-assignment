@@ -1,9 +1,15 @@
 #ifndef HELPER_FUNCTIONS_H
 #define HELPER_FUNCTIONS_H
 
+#include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <sstream>
+
+void check_args(int argc, char* argv[]);
+void open_input_file(std::ifstream &input_file, char *argv[]);
+void ending(std::ifstream &input_file);
 
 int time_to_minutes(const std::string& time);
 int earnings_per_table(const int& minutes, const int& price);

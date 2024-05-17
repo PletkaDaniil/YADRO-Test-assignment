@@ -1,5 +1,26 @@
 #include "helper_functions.h"
 
+void check_args(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cerr << "Use " << argv[0] << " source destination" << "\n";
+        exit(1);
+    }
+}
+
+void open_input_file(std::ifstream& input_file, char* argv[]) {
+    input_file.open(argv[1]);
+    if (!input_file.is_open()) {
+        std::cerr << "Can not open file " << argv[1] << "\n";
+        exit(1);
+    }
+}
+
+void ending(std::ifstream& input_file){
+    input_file.close();
+    exit(0);
+}
+
+
 // Converts a given time in the format “HH:MM” into minutes
 int time_to_minutes(const std::string& time){
     int hours = std::stoi(time.substr(0, 2));
