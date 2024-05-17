@@ -1,17 +1,19 @@
 #include <iostream>
 #include <fstream>
-#include <string>
-#include <vector>
-#include <sstream>
 #include <set>
 #include <map>
 #include <queue>
 
+#include "functions.h"
+
 struct client{
-    int table_num = -1;
-    int command = -1;
+    int table_num;
+    int command;
     std::string time;
     std::string client_name;
+
+    client(int new_table_num = -1, int new_command = -1, const std::string& new_time = "None", const std::string& new_client_name = "None")
+        : table_num(new_table_num), command(new_command), time(new_time), client_name(new_client_name) {}
 };
 
 struct table_info{
@@ -23,93 +25,6 @@ struct result_after_work{
     int all_time_for_table = 0;
     int money = 0;
 };
-
-bool only_digits_check(const std::string& line){
-    return line.find_first_not_of("0123456789") == std::string::npos;
-}
-
-bool command_check(const std::string& line){
-    if (!only_digits_check(line)){
-        return false;
-    }
-    int number_of_command = std::stoi(line);
-    return number_of_command >= 1 && number_of_command <= 4;
-}
-
-bool time_valid_check(const std::string& time){
-    if (time.size() != 5 || time[2] != ':') {
-        return false;
-    }
-    int length = time.size();
-    for (int index = 0; index < length; ++index) {
-        if (index == 2){ continue;}
-        if (time[index] < '0' || time[index] > '9') {
-            return false;
-        }
-    }
-    int hours = std::stoi(time.substr(0, 2));
-    int minutes = std::stoi(time.substr(3, 2));
-    return hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60;
-}
-
-bool client_name_valid_check(const std::string& client_name) {
-    int length = client_name.size();
-    for (int index = 0; index < length; ++index) {
-        if (!((client_name[index] >= 'a' && client_name[index] <= 'z') ||
-            (client_name[index] >= '0' && client_name[index] <= '9') ||
-            client_name[index] == '_' || client_name[index] == '-')) {
-            return false;
-        }
-    }
-    return true;
-}
-
-bool table_number_range_check(const std::string& table_number, const double& total_number_of_tables) {
-    if (!only_digits_check(table_number)) {
-        return false;
-    }
-    int table_number_value = std::stoi(table_number);
-    return table_number_value >= 1 && table_number_value <= total_number_of_tables;
-}
-
-int time_to_minutes(const std::string& time){
-    int hours = std::stoi(time.substr(0, 2));
-    int minutes = std::stoi(time.substr(3, 2));
-    return hours * 60 + minutes;
-}
-
-std::vector<std::string> split_line_by_spaces(const std::string& line){
-    std::istringstream stream_line(line);
-    std::vector<std::string> data;
-    std::string current_part_of_line;
-    while (stream_line >> current_part_of_line) {
-        data.push_back(current_part_of_line);
-    }
-    return data;
-}
-
-
-bool client_entry_valid_check(const std::string& time, const int& start_of_work, const int& end_of_work){
-    int minutes = time_to_minutes(time);
-    return minutes >= start_of_work && minutes <= end_of_work;
-}
-
-std::string convert_minutes_to_hours_minutes(const int& all_minutes) {
-    int hours = all_minutes / 60;
-    int minutes = all_minutes % 60;
-
-    std::string hours_string = (hours < 10) ? "0" + std::to_string(hours) : std::to_string(hours);
-    std::string minutes_string = (minutes < 10) ? "0" + std::to_string(minutes) : std::to_string(minutes);
-
-    std::string timeString = hours_string + ":" + minutes_string;
-
-    return timeString;
-}
-
-int earnings_per_table(const int& minutes, const int& price){
-    return ((minutes + 59) / 60) * price;
-}
-
 
 int main(int argc, char* argv[]){
     if (argc != 2){
@@ -181,11 +96,7 @@ int main(int argc, char* argv[]){
                     }else{ throw std::string{"Format error in line: "}.append(str); }   
             }
         }
-        // for(const auto pair: table_availability) {
-        //     std::cout << "Table " << pair.first << ": " 
-        //             << (pair.second.table_status ? "Available" : "Not Available") 
-        //             << " " <<  pair.second.table_taken_by_client <<std::endl;
-        // }
+
         std::cout << convert_minutes_to_hours_minutes(start_of_work) << "\n";
         std::queue<std::string> clients_waiting_for_tables;
         std::map<std::string, table_info> client_to_table;
@@ -221,7 +132,7 @@ int main(int argc, char* argv[]){
                             int tmp_timer = time_to_minutes(client.time) - client_to_table[client.client_name].timer;
                             time_spent_at_each_table[client.table_num].money += earnings_per_table(tmp_timer, table_price);
                             time_spent_at_each_table[client.table_num].all_time_for_table += tmp_timer;
-                            std::cout << client.table_num << " " << time_to_minutes(client.time) - client_to_table[client.client_name].timer << "!!!!!!!!!!!!!!!!" <<std::endl;
+                            std::cout << client.table_num << " " << time_to_minutes(client.time) - client_to_table[client.client_name].timer << "!!!!!!!!!!!!!!!!" <<"\n";
                         }
                         client_to_table[client.client_name].table = client.table_num;
                         client_to_table[client.client_name].timer = time_to_minutes(client.time);
@@ -268,7 +179,6 @@ int main(int argc, char* argv[]){
 
                         time_spent_at_each_table[client_to_table[client.client_name].table].money += earnings_per_table(tmp_timer, table_price);
                         time_spent_at_each_table[client_to_table[client.client_name].table].all_time_for_table += tmp_timer;
-                        // std::cout << client_to_table[client.client_name].table << " " << time_to_minutes(client.time) - client_to_table[client.client_name].timer << "!!!!!!!!!!!!!!!!" <<std::endl;
                         
                         
                         while (!clients_waiting_for_tables.empty()){
@@ -305,7 +215,7 @@ int main(int argc, char* argv[]){
 
         for (const auto& elem : time_spent_at_each_table) {
             std::cout << elem.first << " " << elem.second.money
-                    << " " << convert_minutes_to_hours_minutes(elem.second.all_time_for_table) << std::endl;
+                    << " " << convert_minutes_to_hours_minutes(elem.second.all_time_for_table) << "\n";
         }
     }catch (const std::string& error_message){
         std::cerr << error_message << "\n";
