@@ -11,7 +11,7 @@ void ensure_data_correctness(const std::string& current_file_line, int& check_st
                 break;
             }else{ throw std::string{"Format error in line: "}.append(current_file_line); }
         case 2: // Stage of checking the correctness for:  "start time" --> "end time"
-            if (data.size() == 2 && time_valid_check(data[0]) && time_valid_check(data[1])){
+            if (data.size() == 2 && time_valid_check(data[0]) && time_valid_check(data[1]) && time_to_minutes(data[0]) < time_to_minutes(data[1])){
                 start_of_work = time_to_minutes(data[0]);
                 end_of_work = time_to_minutes(data[1]);
                 ++check_stage;
@@ -113,8 +113,8 @@ void handle_client_event_2 (const client_info& client, std::map<int, bool>& tabl
         if (client_to_table.find(client.client_name) != client_to_table.end()) {
             table_availability[client_to_table[client.client_name].table] = true;
             int tmp_timer = time_to_minutes(client.time) - client_to_table[client.client_name].timer;
-            time_spent_at_each_table[client.table_num].money += earnings_per_table(tmp_timer, table_price);
-            time_spent_at_each_table[client.table_num].all_time_for_table += tmp_timer;
+            time_spent_at_each_table[client_to_table[client.client_name].table].money += earnings_per_table(tmp_timer, table_price);
+            time_spent_at_each_table[client_to_table[client.client_name].table].all_time_for_table += tmp_timer;
         }
         client_to_table[client.client_name] = {client.table_num, time_to_minutes(client.time)};
         if (clients_waiting_for_tables.front() == client.client_name) {
@@ -182,10 +182,12 @@ void display_latest_club_clients_info(const std::set<std::string>& clients_in_cl
     std::string ending_of_day_work = convert_minutes_to_hours_minutes(end_of_work);
     for(const auto& client: clients_in_club) {
         std::cout << ending_of_day_work << " 11 " << client << "\n";
-        int tmp_timer = end_of_work - client_to_table[client].timer;
-                    
-        time_spent_at_each_table[client_to_table[client].table].money += earnings_per_table(tmp_timer, table_price);
-        time_spent_at_each_table[client_to_table[client].table].all_time_for_table += tmp_timer;
+        if (client_to_table[client].table > 0){
+            int tmp_timer = end_of_work - client_to_table[client].timer;
+                        
+            time_spent_at_each_table[client_to_table[client].table].money += earnings_per_table(tmp_timer, table_price);
+            time_spent_at_each_table[client_to_table[client].table].all_time_for_table += tmp_timer;
+        }
     }
     std::cout << ending_of_day_work << "\n";
 }
