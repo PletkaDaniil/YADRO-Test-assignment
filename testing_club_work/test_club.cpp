@@ -2,6 +2,8 @@
 #include <fstream>
 #include <iostream>
 #include <streambuf>
+#include <cctype>
+#include <locale>
 #include "Club.h"
 
 // #ifdef _WIN32
@@ -11,6 +13,12 @@
 //     #include <unistd.h>
 //     #define GETCWD getcwd
 // #endif
+
+void trim_right(std::string& line) {
+    while (!line.empty() && (line.back() == '\r' || line.back() == '\n')) {
+        line.pop_back();
+    }
+}
 
 void run_test_for_file_check(const std::string& input_file_name, const std::string& expected_output) {
     std::ifstream input_file(input_file_name);
@@ -26,14 +34,16 @@ void run_test_for_file_check(const std::string& input_file_name, const std::stri
             computer_club.file_correctness(current_file_line);
         }
         computer_club.club_working();
-    }catch (const std::string& error_message){
+    }catch (std::string& error_message){
         std::cout.rdbuf(old_cout_stream_buf);
+        // std::cout << expected_output << std::endl;
         // std::cout << error_message << std::endl;
+        trim_right(error_message);
         EXPECT_EQ(error_message, expected_output);
     }
 }
 
-void run_test_for_club_working_check(const std::string& input_file_path, const std::string& expected_output) {
+void run_test_for_club_working_check(const std::string& input_file_path, std::string& expected_output) {
     std::ifstream input_file(input_file_path);
     ASSERT_TRUE(input_file.is_open());
     std::streambuf* old_cout_stream_buf = std::cout.rdbuf();
