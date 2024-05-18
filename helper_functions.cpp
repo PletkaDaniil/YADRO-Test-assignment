@@ -1,5 +1,6 @@
 #include "helper_functions.h"
 
+// Terminal work
 void check_args(int argc, char* argv[]) {
     if (argc != 2) {
         std::cerr << "Use " << argv[0] << " source destination" << "\n";
@@ -7,6 +8,7 @@ void check_args(int argc, char* argv[]) {
     }
 }
 
+// Checking if the input file exists
 void open_input_file(std::ifstream& input_file, char* argv[]) {
     input_file.open(argv[1]);
     if (!input_file.is_open()) {
@@ -15,11 +17,23 @@ void open_input_file(std::ifstream& input_file, char* argv[]) {
     }
 }
 
+// The end.
 void ending(std::ifstream& input_file){
     input_file.close();
     exit(0);
 }
 
+// Delete the client how have left from the club (from queue)
+void remove_client_from_queue(std::queue<std::string>& clients_waiting_for_tables, const std::string& client_left_the_club) {
+    std::queue<std::string> tmp_queue;
+    while (!clients_waiting_for_tables.empty()) {
+        if (clients_waiting_for_tables.front() != client_left_the_club){
+            tmp_queue.push(clients_waiting_for_tables.front());
+        }
+        clients_waiting_for_tables.pop();
+    }
+    clients_waiting_for_tables = tmp_queue;
+}
 
 // Converts a given time in the format “HH:MM” into minutes
 int time_to_minutes(const std::string& time){

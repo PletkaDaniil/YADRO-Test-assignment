@@ -6,10 +6,12 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <queue>
 
 void check_args(int argc, char* argv[]);
 void open_input_file(std::ifstream &input_file, char *argv[]);
 void ending(std::ifstream &input_file);
+void remove_client_from_queue(std::queue<std::string>& clients_waiting_for_tables, const std::string& client_left_the_club);
 
 int time_to_minutes(const std::string& time);
 int earnings_per_table(const int& minutes, const int& price);
