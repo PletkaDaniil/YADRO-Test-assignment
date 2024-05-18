@@ -61,10 +61,20 @@ client_info create_client_information(int number_of_command, const std::vector<s
 
 void process_club_work_and_handle_clients(const std::vector<client_info>& active_clients_data, std::map<int, bool>& table_availability, int start_of_work, int end_of_work, int table_price, int total_number_of_tables) {
     std::cout << convert_minutes_to_hours_minutes(start_of_work) << "\n";
+    
+    // Queue of potential clients
     std::queue<std::string> clients_waiting_for_tables;
+
+    // Recording and storing the names of all clients currently present in the club
     std::set<std::string> clients_in_club;
+
+    // Establishing the relationship between the client and their table
     std::map<std::string, table_info> client_to_table;
+
+    // To record the revenue from each table
     std::map<int, result_after_work> time_spent_at_each_table;
+
+    // The club is open for business! 
     for (const auto& client: active_clients_data){
         switch (client.command){
             case 1:
@@ -96,6 +106,7 @@ void handle_client_event_1 (const client_info& client, std::queue<std::string>& 
         std::cout << client.time << " 13 YouShallNotPass" << "\n";
         return;
     }
+    // If everything is fine, the person joins the queue
     clients_in_club.insert(client.client_name);
     clients_waiting_for_tables.push(client.client_name);
 }
@@ -108,8 +119,11 @@ void handle_client_event_2 (const client_info& client, std::map<int, bool>& tabl
         std::cout << client.time << " 13 ClientUnknown" << "\n";
         return;
     }
+    // Is the table available?
     if (table_availability[client.table_num]) {
         table_availability[client.table_num] = false;
+
+        // Case when a client decides to switch to another table
         if (client_to_table.find(client.client_name) != client_to_table.end()) {
             table_availability[client_to_table[client.client_name].table] = true;
             int tmp_timer = time_to_minutes(client.time) - client_to_table[client.client_name].timer;
@@ -117,6 +131,8 @@ void handle_client_event_2 (const client_info& client, std::map<int, bool>& tabl
             time_spent_at_each_table[client_to_table[client.client_name].table].all_time_for_table += tmp_timer;
         }
         client_to_table[client.client_name] = {client.table_num, time_to_minutes(client.time)};
+
+        // Verify that we indeed have clients in queue
         if (clients_waiting_for_tables.front() == client.client_name) {
             clients_waiting_for_tables.pop();
         } //else{...} <-- you can add some special error here, if necessary
@@ -142,6 +158,9 @@ void handle_client_event_3 (const client_info& client, std::map<int, bool>& tabl
             return;
         }
     }
+
+    // If a client has waited a long time and the number of people in line is large 
+    // (more than the number of tables) --> client leaves
     if (clients_waiting_for_tables.size() >= total_number_of_tables) {
         std::cout << client.time << " 11 " << client.client_name << "\n";
         remove_client_from_queue(clients_waiting_for_tables, client.client_name);
@@ -156,12 +175,15 @@ void handle_client_event_4(const client_info& client, std::map<int, bool>& table
         std::cout << client.time << " 13 ClientUnknown" << "\n";
         return;
     }
+
+    // Check if the person is currently seated at the table or standing in queue
     if (client_to_table.find(client.client_name) != client_to_table.end()) {
         table_availability[client_to_table[client.client_name].table] = true;
         int tmp_timer = time_to_minutes(client.time) - client_to_table[client.client_name].timer;
         time_spent_at_each_table[client_to_table[client.client_name].table].money += earnings_per_table(tmp_timer, table_price);
         time_spent_at_each_table[client_to_table[client.client_name].table].all_time_for_table += tmp_timer;
-
+        
+        // Check if there is anyone in queue to take a seat at the table
         if (!clients_waiting_for_tables.empty()) {
             std::string first_client_in_queue = clients_waiting_for_tables.front();
             client_to_table[first_client_in_queue] = client_to_table[client.client_name];
@@ -182,6 +204,8 @@ void display_latest_club_clients_info(const std::set<std::string>& clients_in_cl
     std::string ending_of_day_work = convert_minutes_to_hours_minutes(end_of_work);
     for(const auto& client: clients_in_club) {
         std::cout << ending_of_day_work << " 11 " << client << "\n";
+
+        // Perhaps someone stood in queue the whole time and never got a seat at the table
         if (client_to_table[client].table > 0){
             int tmp_timer = end_of_work - client_to_table[client].timer;
                         
@@ -191,7 +215,6 @@ void display_latest_club_clients_info(const std::set<std::string>& clients_in_cl
     }
     std::cout << ending_of_day_work << "\n";
 }
-
 
 void display_revenue_for_each_table(const std::map<int, result_after_work>& time_spent_at_each_table) {
     for (const auto& result : time_spent_at_each_table) {
