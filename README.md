@@ -64,7 +64,7 @@ Now it depends on your preferences:
 
 # Some explanations about the task
 
-**1.** About `ID 4` I have implemented my program so that anyone can leave the computer club, both a person at the table and a person in queque.
+**1.** About `ID 4` I have implemented my program so that anyone can leave the computer club, both a person at the table and a person in queue.
 
 **2.** About `ID 3` I have implemented my program so that any client in queue (no matter where they stand) who is waiting and understands that the queue has reached its limit (the number of tables is less than the length of the queue) - the client leaves.
 
