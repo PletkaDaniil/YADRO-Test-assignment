@@ -71,4 +71,4 @@ Now it depends on your preferences:
 **3.**  **Google Tests**: 
    + `15 tests` are provided to check the correctness of the file.
 
-   + `10 tests` for various types of events in the club. For example, what will happen if a person changes their table after 1 minute?
+   + `10 tests` for various types of events in the club. For example, what will happen if a client changes his\her table after 1 minute?
